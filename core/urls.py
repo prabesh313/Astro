@@ -20,9 +20,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from books.views import BookViewSet
+from rituals.views import RitualViewSet, MantraViewSet
 
 router = DefaultRouter()
 router.register(r'books', BookViewSet)
+router.register(r'rituals', RitualViewSet)
+router.register(r'mantras', MantraViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
