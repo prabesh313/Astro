@@ -19,8 +19,13 @@ from django.urls import path,include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,TokenRefreshView
+)
+
 from books.views import BookViewSet
 from rituals.views import RitualViewSet, MantraViewSet
+from users.views import RegisterView, UserProfileView
 
 router = DefaultRouter()
 router.register(r'books', BookViewSet)
@@ -30,4 +35,9 @@ router.register(r'mantras', MantraViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+
+    path('api/users/register/', RegisterView.as_view()),
+    path('api/users/login/', TokenObtainPairView.as_view()),
+    path('api/users/token/refresh/', TokenRefreshView.as_view()),
+    path('api/users/profile/', UserProfileView.as_view()),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
