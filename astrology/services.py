@@ -29,7 +29,8 @@ def get_access_token():
 
 def get_kundali(birth_date, birth_time, latitude, longitude):
     token = get_access_token()
-    datetime_str = f"{birth_date}T{birth_time}+05:45"
+    sandbox_date=f"{birth_date[:4]}-01-01"
+    datetime_str = f"{sandbox_date}T{birth_time}+05:45"
 
     response = requests.get(
         f"{PROKERALA_BASE}/kundli",
@@ -47,7 +48,8 @@ def get_kundali(birth_date, birth_time, latitude, longitude):
 
 def get_panchang(date, latitude=27.7172, longitude=85.3240):
     token = get_access_token()
-    datetime_str = f"{date}T06:00:00+05:45"  # Default time for panchang
+    sandbox_date=f"{date[:4]}-01-01"
+    datetime_str = f"{sandbox_date}T06:00:00+05:45"  # Default time for panchang
 
     response = requests.get(
         f"{PROKERALA_BASE}/panchang",
@@ -66,7 +68,8 @@ def get_panchang(date, latitude=27.7172, longitude=85.3240):
 
 def get_planet_positions(birth_date, birth_time, latitude, longitude):
     token = get_access_token()
-    datetime_str = f"{birth_date}T{birth_time}+05:45"
+    sandbox_date=f"{birth_date[:4]}-01-01"
+    datetime_str = f"{sandbox_date}T{birth_time}+05:45"
 
     response = requests.get(
         f"{PROKERALA_BASE}/planet-position",

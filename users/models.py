@@ -8,7 +8,7 @@ class UserProfile(models.Model):
     birth_date=models.DateField()
     birth_time=models.TimeField()
     birth_longitude= models.FloatField(null=True, blank=True)
-    birth_latitide=models.FloatField(null=True, blank=True)
+    birth_latitude=models.FloatField(null=True, blank=True)
 
     def __str__ (self):
         return self.full_name

@@ -12,12 +12,12 @@ class Kundali(models.Model):
         return f"Kundali of {self.user_profile.full_name}"
     
 
-class Panchanga(models.Model):
+class Panchang(models.Model):
     date=models.DateField(unique=True)
     data= models.JSONField()
     fetched_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Panchanga for {self.date}"
+        return f"Panchang for {self.date}"
     
 
