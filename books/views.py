@@ -7,7 +7,7 @@ from .serializers import BookSerializer, BookCategorySerializer
 class BookViewSet(viewsets.ReadOnlyModelViewSet):
     queryset=Book.objects.all().order_by('-uploaded_at')
     serializer_class=BookSerializer
-    search_filters=[filters.SearchFilter]
+    filter_backends=[filters.SearchFilter]
     search_fields=['title', 'description', 'category__name']
 
     def get_queryset(self):
