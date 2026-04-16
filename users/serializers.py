@@ -25,4 +25,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=UserProfile
-        fields=['id','username','email','full_name','birth_place','birth_date','birth_time','birth_longitude','birth_latitide']
+        fields=['id','username','email','full_name','birth_place','birth_date','birth_time','birth_longitude','birth_latitude']
