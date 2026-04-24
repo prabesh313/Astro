@@ -1,9 +1,11 @@
+from calendar import month
+
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status,permissions
-from .serializers import KundaliSerializer, PanchangSerializer
-from .models import Kundali, Panchang
+from .serializers import BSCalenderDataSerializer, FestivalSerializer, KundaliSerializer, PanchangSerializer
+from .models import BSCalendarData, Festival, Kundali, Panchang
 from .services import get_kundali, get_panchang,get_planet_positions
 from users.models import UserProfile
 import datetime
@@ -122,4 +124,50 @@ class PanchangByDateView(APIView):
         )
         return Response(PanchangSerializer(panchang).data)
     
+class CalendarMonthView(APIView):
+    permission_classes=[permissions.AllowAny]
+    def get(self, request):
+        bs_year = request.query_params.get("bs_year")
+        bs_month = request.query_params.get("bs_month")
+
+        if not bs_year or not bs_month:
+            return Response({"error": "bs_year and bs_month parameters are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            bs_year = int(bs_year)
+            bs_month = int(bs_month)
+        except ValueError:
+            return Response({"error": "Invalid bs_year or bs_month. Must be integers."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch calendar data
+        try:
+            cal_data = BSCalendarData.objects.get(bs_year=bs_year, bs_month=bs_month)
+        except BSCalendarData.DoesNotExist:
+            return Response({"error": "Calendar data not found for BS year {bs_year} and month {bs_month}"}, status=status.HTTP_404_NOT_FOUND)
+        
+        festivals = Festival.objects.filter(bs_date__startswith=f"{bs_year}-{bs_month:02d}")
+
+        start_date = cal_data.ad_month_start
+        end_date = start_date + datetime.timedelta(days=cal_data.num_days)
+
+        panchangs = Panchang.objects.filter(date__gte=start_date, date__lt=end_date).order_by('date')
+
+        return Response({
+            "calendar": BSCalenderDataSerializer(cal_data).data,
+            "festivals": FestivalSerializer(festivals, many=True).data,
+            "panchangs": PanchangSerializer(panchangs, many=True).data,
+
+            "meta":{
+                "month_name":self._get_bs_month_name(bs_month),
+                "num_days":cal_data.num_days,
+                "today":str(datetime.date.today()),
+            }
+        })
+    
+    def _get_bs_month_name(self, month):
+        months = [
+            'बैशाख', 'जेठ', 'असार', 'श्रावण', 'भाद्र', 'आश्विन',
+            'कार्तिक', 'मंसिर', 'पौष', 'माघ', 'फाल्गुन', 'चैत्र'
+        ]
+        return months[month-1] if 1 <= month <= 12 else "Unknown"
 
