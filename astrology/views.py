@@ -170,4 +170,60 @@ class CalendarMonthView(APIView):
             'कार्तिक', 'मंसिर', 'पौष', 'माघ', 'फाल्गुन', 'चैत्र'
         ]
         return months[month-1] if 1 <= month <= 12 else "Unknown"
+    
 
+class FestivalListView(APIView):
+    permission_classes=[permissions.AllowAny]
+    def get(self, request):
+        bs_year = request.query_params.get("year")
+        bs_month = request.query_params.get("month")
+        queryset = Festival.objects.all()
+
+        if bs_year:
+            queryset = queryset.filter(year=int(bs_year))
+
+        if bs_month:
+            queryset = queryset.filter(bs_date_startswith=f"{int(bs_year)}-{int(bs_month):02d}")
+
+        festivals = queryset.order_by('bs_date')
+        return Response(FestivalSerializer(festivals, many=True).data)
+
+class CurrentDataView(APIView):
+    permission_classes=[permissions.AllowAny]
+    def get(self, request):
+        today_ad = datetime.date.today()
+
+        try:
+            panchang = Panchang.objects.get(date=today_ad)
+        except Panchang.DoesNotExist:
+            panchang = None
+
+        try:
+            cal=BSCalendarData.objects.get(ad_month_start__lte=today_ad).order_by('-ad_month_start').first()
+            
+            if cal:
+                days_diff = (today_ad - cal.ad_month_start).days
+                bs_day = days_diff + 1
+                bs_month = cal.bs_month
+                bs_year = cal.bs_year
+
+            if bs_day > cal.num_days:
+                bs_day = 1
+                bs_month += 1
+                if bs_month > 12:
+                    bs_month = 1
+                    bs_year += 1
+        except BSCalendarData.DoesNotExist:
+            cal = None
+            bs_day = None
+            bs_month = None
+            bs_year = None
+
+        return Response({
+            "today_ad": str(today_ad),
+            "today_bs": {"year": bs_year, "month": bs_month, "day": bs_day,}
+                
+            
+            if bs_year else None,
+            "panchang": PanchangSerializer(panchang).data if panchang else None,
+        })
