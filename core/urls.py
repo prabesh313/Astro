@@ -26,7 +26,7 @@ from rest_framework_simplejwt.views import (
 from books.views import BookViewSet
 from rituals.views import RitualViewSet, MantraViewSet
 from users.views import RegisterView, UserProfileView
-from astrology.views import GenerateKundaliView, MyKundaliListView, TodayPanchangView,PanchangByDateView
+from astrology.views import CalendarMonthView, CurrentDateView, FestivalListView, GenerateKundaliView, MyKundaliListView, TodayPanchangView,PanchangByDateView
 
 router = DefaultRouter()
 router.register(r'books', BookViewSet)
@@ -46,4 +46,8 @@ urlpatterns = [
     path('api/astrology/kundali/', MyKundaliListView.as_view()),
     path('api/astrology/panchang/today/', TodayPanchangView.as_view()),
     path('api/astrology/panchang/', PanchangByDateView.as_view()),
+
+    path('api/astrology/calendar/month/',CalendarMonthView.as_view()),
+    path('api/astrology/festivals/',FestivalListView.as_view()),
+    path('api/astrology/current-date/',CurrentDateView.as_view()),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -183,12 +183,12 @@ class FestivalListView(APIView):
             queryset = queryset.filter(year=int(bs_year))
 
         if bs_month:
-            queryset = queryset.filter(bs_date_startswith=f"{int(bs_year)}-{int(bs_month):02d}")
+            queryset = queryset.filter(bs_date__startswith=f"{int(bs_year)}-{int(bs_month):02d}")
 
         festivals = queryset.order_by('bs_date')
         return Response(FestivalSerializer(festivals, many=True).data)
 
-class CurrentDataView(APIView):
+class CurrentDateView(APIView):
     permission_classes=[permissions.AllowAny]
     def get(self, request):
         today_ad = datetime.date.today()
@@ -199,7 +199,8 @@ class CurrentDataView(APIView):
             panchang = None
 
         try:
-            cal=BSCalendarData.objects.get(ad_month_start__lte=today_ad).order_by('-ad_month_start').first()
+            # cal stores starting date of bs month(in ad)
+            cal=BSCalendarData.objects.filter(ad_month_start__lte=today_ad).order_by('-ad_month_start').first()
             
             if cal:
                 days_diff = (today_ad - cal.ad_month_start).days
@@ -207,6 +208,7 @@ class CurrentDataView(APIView):
                 bs_month = cal.bs_month
                 bs_year = cal.bs_year
 
+            # if bs_day is 32 and cal.num_days=31 , move to next month and the date will be 01
             if bs_day > cal.num_days:
                 bs_day = 1
                 bs_month += 1
