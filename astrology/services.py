@@ -127,3 +127,87 @@ def get_planet_positions(birth_date, birth_time, latitude, longitude):
         raise Exception(f"Planet positions fetch failed: {response.text}")
 
     return response.json()
+
+def get_daily_horoscope(rashi_name):
+    token = get_access_token()
+    response=requests.get(
+        f"{PROKERALA_BASE}/horoscope/daily",
+        headers={"Authorization":f"Bearer{token}"},
+        params={
+            "rashi":rashi_name
+            }
+        )
+    
+    if response.status_code != 200:
+        raise Exception(f"Daily horoscope fetch failed: {response.text}")
+
+    api_data=response.json()
+    
+    parsed={
+        "raw_response": api_data,
+        "prediction": api_data.get("description") or api_data.get("prediction") or "",
+        "love_score": parse_score(api_data.get("love")),
+        "career_score": parse_score(api_data.get("career") or api_data.get("profession")),
+        "health_score": parse_score(api_data.get("health")),
+        "money_score": parse_score(api_data.get("money") or api_data.get("finance")),
+        "lucky_color": api_data.get("lucky_color") or api_data.get("luckyColor") or "",
+        "lucky_number": api_data.get("lucky_number") or api_data.get("luckyNumber") or "",
+        "lucky_time": api_data.get("lucky_time") or api_data.get("luckyTime") or "",
+        "advice": api_data.get("advice") or api_data.get("remedies") or "",
+
+
+    }
+    return parsed
+
+def parse_score(score_text):
+    if not score_text:
+        return 3
+    
+    score_mapping={
+        'poor':1,
+        'fair':2,
+        'good':3,
+        'very good':4,
+        'excellent':5
+    }
+
+    return score_mapping.get(score_text.lower(), 3 )
+
+
+def get_monthly_horoscope(rashi_name, month=None):
+    token=get_access_token()
+    params={
+        "rashi":rashi_name
+    }
+    if month:
+        params["month"]=month
+    
+    response=requests.get(
+        f"{PROKERALA_BASE}/horoscope/monthly",
+        headers={"Authorization": f"Bearer {token}"},
+        params=params
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Monthly horoscope fetch failed: {response.text}")
+    
+    return response.json()
+
+def get_yearly_horoscope(rashi_name, year=None):
+    token=get_access_token()
+    params={
+        "rashi":rashi_name
+    }
+    if year:
+        params["year"]=year
+    
+    response=requests.get(
+        f"{PROKERALA_BASE}/horoscope/yearly",
+        headers={"Authorization": f"Bearer {token}"},
+        params=params
+    )
+
+    if response.status_code != 200:
+        raise Exception(f"Yearly horoscope fetch failed: {response.text}")
+    
+    return response.json()

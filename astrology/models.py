@@ -66,3 +66,58 @@ class BSCalendarData(models.Model):
         ]
     def __str__(self):
         return f"BS Year: {self.bs_year}--{self.bs_month}"
+    
+
+class Horoscope(models.Model):
+    RASHI_CHOICES = [
+        ('aries', 'मेष'),
+        ('taurus', 'वृषभ'),
+        ('gemini', 'मिथुन'),
+        ('cancer', 'कर्क'),
+        ('leo', 'सिंह'),
+        ('virgo', 'कन्या'),
+        ('libra', 'तुला'),
+        ('scorpio', 'वृश्चिक'),
+        ('sagittarius', 'धनु'),
+        ('capricorn', 'मकर'),
+        ('aquarius', 'कुम्भ'),
+        ('pisces', 'मीन'),
+    ]
+
+    HOROSCOPE_TYPE_CHOICES = [
+        ('daily', 'Daily'),
+        ('monthly', 'Monthly'),
+        ('yearly', 'Yearly'),
+    ]
+
+    rashi = models.CharField(max_length=20, choices=RASHI_CHOICES)
+    horoscope_type = models.CharField(max_length=20, choices=HOROSCOPE_TYPE_CHOICES, default='daily')
+
+    date=models.DateField()
+    prediction=models.TextField()
+
+    love_score=models.IntegerField(default=3)
+    career_score=models.IntegerField(default=3)
+    health_score=models.IntegerField(default=3)
+    money_score=models.IntegerField(default=3)
+
+    lucky_color=models.CharField(max_length=50, blank=True)
+    lucky_number=models.IntegerField(null=True, blank=True)
+    lucky_time=models.CharField(max_length=50, blank=True)
+
+    advice=models.TextField(blank=True)
+    api_response=models.JSONField(blank=True, null=True)
+
+    fetched_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('rashi', 'horoscope_type', 'date')
+        ordering=['-date', 'rashi']
+        indexes=[
+            models.Index(fields=['rashi', 'date']),
+            models.Index(fields=['date']),
+        ]
+
+    def __str__(self):
+        return f"{self.get_rashi_display()} - {self.date} ({self.horoscope_type})"
+
