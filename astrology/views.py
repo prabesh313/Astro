@@ -4,11 +4,22 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status,permissions
-from .serializers import BSCalenderDataSerializer, FestivalSerializer, KundaliSerializer, PanchangSerializer
+from django.utils import timezone
+from .serializers import BSCalendarDataSerializer, FestivalSerializer, KundaliSerializer, PanchangSerializer
 from .models import BSCalendarData, Festival, Kundali, Panchang
 from .services import get_kundali, get_panchang,get_planet_positions
 from users.models import UserProfile
 import datetime
+
+
+def get_or_fetch_panchang_for_date(target_date):
+    try:
+        panchang = Panchang.objects.get(date=target_date)
+        return panchang, True
+    except Panchang.DoesNotExist:
+        data = get_panchang(str(target_date))
+        panchang = Panchang.objects.create(date=target_date, data=data)
+        return panchang, False
 
 class GenerateKundaliView(APIView):
     permission_classes=[permissions.IsAuthenticated]
@@ -58,30 +69,14 @@ class MyKundaliListView(APIView):
 class TodayPanchangView(APIView):
     permission_classes=[permissions.AllowAny]
     def get(self, request):
-        today = datetime.date.today()
-
-        # Check if we already fetched today's panchang (cache in DB)
+        today = timezone.localdate()
         try:
-            panchang = Panchang.objects.get(date=today)
-            return Response(
-                {"cached": True, "panchang": PanchangSerializer(panchang).data}
-            )
-        except Panchang.DoesNotExist:
-            pass
-
-
-        #otherwise fetch from API and save
-        try:
-            data = get_panchang(str(today))
+            panchang, cached = get_or_fetch_panchang_for_date(today)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        panchang= Panchang.objects.create(
-            date=today,
-            data=data
-        )
 
         return Response({
-            "cached": False,
+            "cached": cached,
             "panchang": PanchangSerializer(panchang).data
         })
     
@@ -97,135 +92,153 @@ class PanchangByDateView(APIView):
         except ValueError:
             return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check cache
         try:
-            panchang = Panchang.objects.get(date=date)
-            return Response(
-                {"cached": True, "panchang": PanchangSerializer(panchang).data}
-            )
-        except Panchang.DoesNotExist:
-            pass
-
-        # Fetch from API
-        try:
-            panchang=Panchang.objects.get(date=date)
-            return Response(PanchangSerializer(panchang).data)
-        except Panchang.DoesNotExist:
-            pass
-
-        #otherwise fetch from API and save
-        try:
-            data = get_panchang(str(date))
+            panchang, cached = get_or_fetch_panchang_for_date(date)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        panchang= Panchang.objects.create(
-            date=date,
-            data=data
-        )
-        return Response(PanchangSerializer(panchang).data)
-    
+
+        return Response({
+            "cached": cached,
+            "panchang": PanchangSerializer(panchang).data
+        })
+
 class CalendarMonthView(APIView):
-    permission_classes=[permissions.AllowAny]
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request):
-        bs_year = request.query_params.get("bs_year")
-        bs_month = request.query_params.get("bs_month")
+        bs_year = request.query_params.get('bs_year')
+        bs_month = request.query_params.get('bs_month')
 
         if not bs_year or not bs_month:
-            return Response({"error": "bs_year and bs_month parameters are required"}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response(
+                {"error": "Please provide ?bs_year=YYYY&bs_month=M"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             bs_year = int(bs_year)
             bs_month = int(bs_month)
         except ValueError:
-            return Response({"error": "Invalid bs_year or bs_month. Must be integers."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Year and month must be integers"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # Fetch calendar data
+        # Get calendar data
         try:
-            cal_data = BSCalendarData.objects.get(bs_year=bs_year, bs_month=bs_month)
+            cal_data = BSCalendarData.objects.get(
+                bs_year=bs_year,
+                bs_month=bs_month
+            )
         except BSCalendarData.DoesNotExist:
-            return Response({"error": "Calendar data not found for BS year {bs_year} and month {bs_month}"}, status=status.HTTP_404_NOT_FOUND)
-        
-        festivals = Festival.objects.filter(bs_date__startswith=f"{bs_year}-{bs_month:02d}")
+            return Response(
+                {"error": f"Calendar data not found for BS {bs_year}-{bs_month}"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
+        # Get festivals for this month
+        festivals = Festival.objects.filter(
+            bs_date__startswith=f"{bs_year}-{bs_month:02d}-"
+        )
+
+        # Get all panchangs for this month (start to end date)
         start_date = cal_data.ad_month_start
-        end_date = start_date + datetime.timedelta(days=cal_data.num_days)
-
-        panchangs = Panchang.objects.filter(date__gte=start_date, date__lt=end_date).order_by('date')
+        end_date = start_date + datetime.timedelta(
+            days=cal_data.num_days
+        )
+        panchangs = Panchang.objects.filter(
+            date__gte=start_date,
+            date__lt=end_date
+        )
 
         return Response({
-            "calendar": BSCalenderDataSerializer(cal_data).data,
+            "calendar": BSCalendarDataSerializer(cal_data).data,
             "festivals": FestivalSerializer(festivals, many=True).data,
             "panchangs": PanchangSerializer(panchangs, many=True).data,
-
-            "meta":{
-                "month_name":self._get_bs_month_name(bs_month),
-                "num_days":cal_data.num_days,
-                "today":str(datetime.date.today()),
+            "meta": {
+                "month_name": self._get_bs_month_name(bs_month),
+                "num_days": cal_data.num_days,
+                "today": str(datetime.date.today()),
             }
         })
-    
+
     def _get_bs_month_name(self, month):
         months = [
             'बैशाख', 'जेठ', 'असार', 'श्रावण', 'भाद्र', 'आश्विन',
             'कार्तिक', 'मंसिर', 'पौष', 'माघ', 'फाल्गुन', 'चैत्र'
         ]
-        return months[month-1] if 1 <= month <= 12 else "Unknown"
-    
+        return months[month - 1] if 1 <= month <= 12 else 'Unknown'
 
 class FestivalListView(APIView):
-    permission_classes=[permissions.AllowAny]
+    """
+    GET /api/astrology/festivals/
+    GET /api/astrology/festivals/?month=1&year=2082
+    List festivals, optionally filtered by month/year
+    """
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request):
-        bs_year = request.query_params.get("year")
-        bs_month = request.query_params.get("month")
+        bs_year = request.query_params.get('bs_year')
+        bs_month = request.query_params.get('bs_month')
+
         queryset = Festival.objects.all()
 
         if bs_year:
             queryset = queryset.filter(year=int(bs_year))
 
         if bs_month:
-            queryset = queryset.filter(bs_date__startswith=f"{int(bs_year)}-{int(bs_month):02d}")
+            queryset = queryset.filter(
+                bs_date__startswith=f"{bs_year}-{int(bs_month):02d}-"
+            )
 
-        festivals = queryset.order_by('bs_date')
+        festivals = queryset.order_by('ad_date')
         return Response(FestivalSerializer(festivals, many=True).data)
 
 class CurrentDateView(APIView):
-    permission_classes=[permissions.AllowAny]
+    """
+    GET /api/astrology/current-date/
+    Returns today's date in both AD and BS formats
+    """
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request):
-        today_ad = datetime.date.today()
+        today_ad = timezone.localdate()
+        bs_year = bs_month = bs_day = None
 
         try:
-            panchang = Panchang.objects.get(date=today_ad)
-        except Panchang.DoesNotExist:
+            panchang, _ = get_or_fetch_panchang_for_date(today_ad)
+        except Exception:
             panchang = None
 
+        # Try to find matching BS date from calendar data
+        # (This is a simplification — in production you'd use a proper conversion)
         try:
-            # cal stores starting date of bs month(in ad)
-            cal=BSCalendarData.objects.filter(ad_month_start__lte=today_ad).order_by('-ad_month_start').first()
-            
+            cal = BSCalendarData.objects.filter(
+                ad_month_start__lte=today_ad
+            ).order_by('-ad_month_start').first()
+
             if cal:
                 days_diff = (today_ad - cal.ad_month_start).days
                 bs_day = days_diff + 1
                 bs_month = cal.bs_month
                 bs_year = cal.bs_year
 
-            # if bs_day is 32 and cal.num_days=31 , move to next month and the date will be 01
-            if bs_day > cal.num_days:
-                bs_day = 1
-                bs_month += 1
-                if bs_month > 12:
-                    bs_month = 1
-                    bs_year += 1
-        except BSCalendarData.DoesNotExist:
-            cal = None
-            bs_day = None
-            bs_month = None
-            bs_year = None
+                # Handle month overflow
+                if bs_day > cal.num_days:
+                    bs_day = 1
+                    bs_month += 1
+                    if bs_month > 12:
+                        bs_month = 1
+                        bs_year += 1
+        except Exception as e:
+            bs_year = bs_month = bs_day = None
 
         return Response({
             "today_ad": str(today_ad),
-            "today_bs": {"year": bs_year, "month": bs_month, "day": bs_day,}
-                
-            
-            if bs_year else None,
+            "today_bs": ({
+                "year": bs_year,
+                "month": bs_month,
+                "day": bs_day,
+            } if bs_year else None),
             "panchang": PanchangSerializer(panchang).data if panchang else None,
         })
