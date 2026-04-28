@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import BSCalendarData, Festival, Kundali, Panchang
+from .models import BSCalendarData, Festival, Kundali, Panchang,Horoscope
 
 class KundaliSerializer(serializers.ModelSerializer):
     user_name=serializers.CharField(source='user_profile.full_name', read_only=True )
@@ -33,3 +33,12 @@ class CalendarMonthSerializer(serializers.Serializer):
     ad_month_start=serializers.DateField()
     festivals=FestivalSerializer(many=True, read_only=True)
     panchangs=PanchangSerializer(many=True, read_only=True)
+
+class HoroscopeSerializer(serializers.ModelSerializer):
+    rashi_name=serializers.CharField(source='get_rashi_name', read_only=True)
+    class Meta:
+        model=Horoscope
+        fields=['id','rashi','rashi_name','horoscope_type','date','prediction','love_score','career_score','health_score','money_score','lucky_color','lucky_number','lucky_time','advice','fetched_at']
+
+
+

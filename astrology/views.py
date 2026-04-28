@@ -1,15 +1,19 @@
 from calendar import month
 
 from django.shortcuts import render
+from rest_framework.generics import ListAPIView
+import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status,permissions
 from django.utils import timezone
-from .serializers import BSCalendarDataSerializer, FestivalSerializer, KundaliSerializer, PanchangSerializer
-from .models import BSCalendarData, Festival, Kundali, Panchang
-from .services import get_kundali, get_panchang,get_planet_positions
+from .serializers import BSCalendarDataSerializer, FestivalSerializer, KundaliSerializer, PanchangSerializer,HoroscopeSerializer
+from .models import BSCalendarData, Festival, Kundali, Panchang,Horoscope
+from .services import get_kundali, get_panchang,get_planet_positions,get_daily_horoscope,get_monthly_horoscope,get_yearly_horoscope
 from users.models import UserProfile
 import datetime
+from datetime import date
+
 
 
 def get_or_fetch_panchang_for_date(target_date):
@@ -211,7 +215,6 @@ class CurrentDateView(APIView):
             panchang = None
 
         # Try to find matching BS date from calendar data
-        # (This is a simplification — in production you'd use a proper conversion)
         try:
             cal = BSCalendarData.objects.filter(
                 ad_month_start__lte=today_ad
@@ -241,4 +244,179 @@ class CurrentDateView(APIView):
                 "day": bs_day,
             } if bs_year else None),
             "panchang": PanchangSerializer(panchang).data if panchang else None,
+        })
+    
+
+class DailyHoroscopeView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        rashi = request.query_params.get('rashi','').lower()
+        if not rashi:
+            return Response({"error": "Please provide ?rashi=aries(or other rashi)"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        valid_rashis = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces']
+
+        if rashi not in valid_rashis:
+            return Response({"error": f"Invalid rashi. Must be one of: {', '.join(valid_rashis)}"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        today=date.today()
+
+        #check if we alreay have today's horoscope cached
+        try:
+            horoscope=Horoscope.objects.get(rashi=rashi, date=today,horoscope_type='daily')
+            return Response(
+                {
+                    "cached": True,
+                    "horoscope": HoroscopeSerializer(horoscope).data
+                }
+            )
+        except Horoscope.DoesNotExist:
+            pass
+
+        #fetch from external API
+        try:
+            horoscope_data = get_daily_horoscope(rashi)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        
+        #save to database
+        horoscope = Horoscope.objects.create(
+            rashi=rashi,
+            date=today,
+            horoscope_type='daily',
+            prediction=horoscope_data.get('prediction', ''),
+            love_score=horoscope_data.get('love_score', 3),
+            career_score=horoscope_data.get('career_score', 3),
+            health_score=horoscope_data.get('health_score', 3),
+            money_score=horoscope_data.get('money_score', 3),
+            lucky_color=horoscope_data.get('lucky_color', ''),
+            lucky_number=horoscope_data.get('lucky_number', ''),
+            lucky_time=horoscope_data.get('lucky_time', ''),
+            advice=horoscope_data.get('advice', ''),
+            api_response=horoscope_data.get('raw_response'),
+            
+        )
+
+        return Response(
+            {
+                "cached": False,
+                "horoscope": HoroscopeSerializer(horoscope).data
+            }
+        )
+
+#filters queryset and returns horoscope list with filtering by rashi and type
+class HoroscopeListView(ListAPIView):
+    serializer_class = HoroscopeSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        queryset = Horoscope.objects.all()
+        
+        rashi = self.request.query_params.get('rashi')
+        if rashi:
+            queryset = queryset.filter(rashi=rashi.lower())
+        
+        horoscope_type = self.request.query_params.get('type')
+        if horoscope_type:
+            queryset = queryset.filter(horoscope_type=horoscope_type)
+        
+        return queryset.order_by('-date')
+
+
+class MonthlyHoroscopeView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def get(self, request):
+        rashi = request.query_params.get('rashi', '').lower()
+        month = request.query_params.get('month')
+        
+        if not rashi:
+            return Response(
+                {"error": "Please provide ?rashi=aries"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            horoscope_data = get_monthly_horoscope(rashi, month)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to fetch monthly horoscope: {str(e)}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
+        return Response(horoscope_data)
+    
+class YearlyHoroscopeView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        rashi = request.query_params.get('rashi', '').lower()
+        year = request.query_params.get('year')
+        
+        if not rashi:
+            return Response(
+                {"error": "Please provide ?rashi=aries"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            horoscope_data = get_yearly_horoscope(rashi, year)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to fetch yearly horoscope: {str(e)}"},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+
+        return Response(horoscope_data)
+
+
+class AllRashisHoroscopeView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        rashis = [
+            'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo',
+            'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'
+        ]
+        
+        horoscope_type = request.query_params.get('type', 'daily')
+        today = date.today()
+        
+        results = []
+        for rashi in rashis:
+            try:
+                #try to get from database first
+                horoscope = Horoscope.objects.get(
+                    rashi=rashi,
+                    date=today,
+                    horoscope_type=horoscope_type
+                )
+                results.append(HoroscopeSerializer(horoscope).data)
+            except Horoscope.DoesNotExist:
+                #try to fetch from API
+                try:
+                    horoscope_data = get_daily_horoscope(rashi)
+                    horoscope = Horoscope.objects.create(
+                        rashi=rashi,
+                        horoscope_type=horoscope_type,
+                        date=today,
+                        prediction=horoscope_data.get('prediction', ''),
+                        love_score=horoscope_data.get('love_score', 3),
+                        career_score=horoscope_data.get('career_score', 3),
+                        health_score=horoscope_data.get('health_score', 3),
+                        money_score=horoscope_data.get('money_score', 3),
+                        lucky_color=horoscope_data.get('lucky_color', ''),
+                        lucky_number=horoscope_data.get('lucky_number', ''),
+                        lucky_time=horoscope_data.get('lucky_time', ''),
+                        advice=horoscope_data.get('advice', ''),
+                        api_response=horoscope_data.get('raw_response'),
+                    )
+                    results.append(HoroscopeSerializer(horoscope).data)
+                except Exception as e:
+                    print(f"Failed to get horoscope for {rashi}: {str(e)}")
+        
+        return Response({
+            "date": str(today),
+            "type": horoscope_type,
+            "horoscopes": results
         })
