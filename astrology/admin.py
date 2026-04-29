@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Kundali, Panchang,Festival,BSCalendarData
+from .models import Kundali, Panchang,Festival,BSCalendarData,Horoscope
 
 # Register your models here.
 @admin.register(Kundali)
@@ -39,3 +39,28 @@ class BSCalendarDataAdmin(admin.ModelAdmin):
     list_filter = ['bs_year']
     ordering = ['bs_year', 'bs_month']
     readonly_fields = ['bs_year', 'bs_month']
+
+@admin.register(Horoscope)
+class HoroscopeAdmin(admin.ModelAdmin):
+    list_display = ['rashi', 'date', 'horoscope_type', 'love_score', 'career_score', 'fetched_at']
+    list_filter = ['rashi', 'date', 'horoscope_type']
+    search_fields = ['rashi']
+    readonly_fields = ['fetched_at', 'api_response']
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('rashi', 'horoscope_type', 'date')
+        }),
+        ('Prediction', {
+            'fields': ('prediction', 'advice')
+        }),
+        ('Scores', {
+            'fields': ('love_score', 'career_score', 'health_score', 'money_score')
+        }),
+        ('Lucky Attributes', {
+            'fields': ('lucky_color', 'lucky_number', 'lucky_time')
+        }),
+        ('Debug', {
+            'fields': ('api_response', 'fetched_at'),
+            'classes': ('collapse',)
+        }),
+    )
