@@ -9,7 +9,7 @@ from rest_framework import status,permissions
 from django.utils import timezone
 from .serializers import BSCalendarDataSerializer, FestivalSerializer, KundaliSerializer, PanchangSerializer,HoroscopeSerializer
 from .models import BSCalendarData, Festival, Kundali, Panchang,Horoscope
-from .services import get_kundali, get_panchang,get_planet_positions,get_daily_horoscope,get_monthly_horoscope,get_yearly_horoscope
+from .services import get_kundali, get_panchang,get_planet_positions,get_daily_horoscope
 from users.models import UserProfile
 import datetime
 from datetime import date
@@ -323,51 +323,8 @@ class HoroscopeListView(ListAPIView):
         
         return queryset.order_by('-date')
 
-
-class MonthlyHoroscopeView(APIView):
-    permission_classes = [permissions.AllowAny]
-    def get(self, request):
-        rashi = request.query_params.get('rashi', '').lower()
-        month = request.query_params.get('month')
-        
-        if not rashi:
-            return Response(
-                {"error": "Please provide ?rashi=aries"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            horoscope_data = get_monthly_horoscope(rashi, month)
-        except Exception as e:
-            return Response(
-                {"error": f"Failed to fetch monthly horoscope: {str(e)}"},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
-
-        return Response(horoscope_data)
     
-class YearlyHoroscopeView(APIView):
-    permission_classes = [permissions.AllowAny]
 
-    def get(self, request):
-        rashi = request.query_params.get('rashi', '').lower()
-        year = request.query_params.get('year')
-        
-        if not rashi:
-            return Response(
-                {"error": "Please provide ?rashi=aries"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            horoscope_data = get_yearly_horoscope(rashi, year)
-        except Exception as e:
-            return Response(
-                {"error": f"Failed to fetch yearly horoscope: {str(e)}"},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE
-            )
-
-        return Response(horoscope_data)
 
 
 class AllRashisHoroscopeView(APIView):

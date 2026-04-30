@@ -86,8 +86,7 @@ class Horoscope(models.Model):
 
     HOROSCOPE_TYPE_CHOICES = [
         ('daily', 'Daily'),
-        ('monthly', 'Monthly'),
-        ('yearly', 'Yearly'),
+
     ]
 
     rashi = models.CharField(max_length=20, choices=RASHI_CHOICES)
