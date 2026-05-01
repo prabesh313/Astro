@@ -25,7 +25,7 @@ from rest_framework_simplejwt.views import (
 
 from books.views import BookViewSet
 from rituals.views import RitualViewSet, MantraViewSet
-from users.views import RegisterView, UserProfileView
+from users.views import ChatDetailView, ChatListView, MarkMessagesReadView, MessageListView, PriestDetailView, PriestListView, RegisterView, ReviewListView, ReviewView, StartChatView, UserProfileView
 from astrology.views import CalendarMonthView, CurrentDateView, DailyHoroscopeView,AllRashisHoroscopeView, FestivalListView, GenerateKundaliView, HoroscopeListView, MyKundaliListView, TodayPanchangView,PanchangByDateView
 
 router = DefaultRouter()
@@ -55,4 +55,17 @@ urlpatterns = [
     path('api/astrology/horoscope/daily/', DailyHoroscopeView.as_view()),
     path('api/astrology/horoscope/', HoroscopeListView.as_view()),
     path('api/astrology/horoscope/all/', AllRashisHoroscopeView.as_view()),
+
+    path('api/priests/', PriestListView.as_view()),
+    path('api/priests/<int:pk>/', PriestDetailView.as_view()),
+
+    path('api/chats/', ChatListView.as_view()),
+    path('api/chats/<int:pk>/', ChatDetailView.as_view()),
+    path('api/chats/start/', StartChatView.as_view()),
+    path('api/chats/<int:chat_id>/messages/', MessageListView.as_view()),
+    path('api/chats/<int:chat_id>/mark-read/', MarkMessagesReadView.as_view()),
+
+    path('api/reviews/', ReviewView.as_view()),
+    path('api/priests/<int:priest_id>/reviews/', ReviewListView.as_view()),
+
     ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

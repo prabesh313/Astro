@@ -5,7 +5,6 @@ from django.core.cache import cache
 from datetime import datetime, date
 
 def get_access_token():
-    """Get OAuth token from Prokerala"""
     token = cache.get('prokerala_token')
     if token:
         return token
