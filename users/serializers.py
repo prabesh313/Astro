@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile, Chat, Message, Review
+from .models import PriestSchedule, UserProfile, Chat, Message, Review
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -93,3 +93,17 @@ class ReviewSerializer(serializers.ModelSerializer):
             'id', 'purohit', 'jajaman', 'jajaman_username', 'jajaman_name','rating', 'comment', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+
+
+class PriestSchedulerSerializer(serializers.ModelSerializer):
+    event_type_display = serializers.CharField(source='get_event_type_display', read_only=True)
+    class Meta:
+        model = PriestSchedule
+        fields = ['id', 'busy_date', 'event_type', 'event_type_display','event_title', 'start_time', 'end_time', 'location', 'contact_person', 'phone_number', 'created_at','notes' 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class BusyDateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PriestSchedule
+        fields = ['id', 'busy_date']

@@ -91,3 +91,40 @@ class Review(models.Model):
     class Meta:
         unique_together = ('purohit', 'jajaman')
         ordering = ['-created_at']
+
+class PriestSchedule(models.Model):
+        PUJA_TYPES = [
+        ('vivah', 'विवाह (Marriage)'),
+        ('satyanarayan', 'सत्यनारायण पूजा'),
+        ('griha_pravesh', 'गृह प्रवेश (House Warming)'),
+        ('janai', 'जनै'),
+        ('annaprashan', 'अन्नप्राशन'),
+        ('upanayan', 'उपनयन'),
+        ('shradh', 'श्राद्ध'),
+        ('other', 'अन्य'),
+    ]
+        
+        priest = models.ForeignKey(User, on_delete=models.CASCADE, related_name='schedules')
+        busy_date = models.DateField()
+        event_type=models.CharField(max_length=20, choices=PUJA_TYPES )
+        event_title=models.CharField(max_length=200)
+        start_time=models.TimeField(null=True, blank=True)
+        end_time=models.TimeField(null=True, blank=True)
+        location=models.CharField(max_length=200)
+        contact_person=models.CharField(max_length=100, blank=True)
+        phone_number=models.CharField(max_length=20, blank=True)
+        notes = models.TextField(blank=True)
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+
+        def __str__(self):
+            return f"{self.priest.userprofile.full_name} - {self.busy_date}"
+        
+        class Meta:
+            ordering = ['busy_date']
+            indexes = [
+                models.Index(fields=['priest', 'busy_date']),
+                models.Index(fields=['busy_date']),
+            ]
+            verbose_name_plural = "Priest Schedules"
+            unique_together = ('priest', 'busy_date')
