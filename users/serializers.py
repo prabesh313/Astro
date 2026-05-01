@@ -95,7 +95,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at']
 
 
-class PriestSchedulerSerializer(serializers.ModelSerializer):
+class PriestScheduleSerializer(serializers.ModelSerializer):
     event_type_display = serializers.CharField(source='get_event_type_display', read_only=True)
     class Meta:
         model = PriestSchedule

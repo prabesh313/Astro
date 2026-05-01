@@ -1,3 +1,4 @@
+import datetime
 from email.message import Message
 from time import timezone
 from warnings import filters
@@ -9,8 +10,8 @@ from rest_framework.views import APIView
 from django.contrib.auth.models import User
 
 from rituals import serializers
-from .models import Chat, Review, UserProfile
-from .serializers import ChatSerializer, MessageSerializer, PriestListSerializer, RegisterSerializer, ReviewSerializer,UserProfileSerializer
+from .models import Chat, PriestSchedule, Review, UserProfile
+from .serializers import BusyDateSerializer, ChatSerializer, MessageSerializer, PriestListSerializer, PriestScheduleSerializer, PriestSchedulerSerializer, RegisterSerializer, ReviewSerializer,UserProfileSerializer
 from django.db.models import Q
 from rest_framework import filters
 from rest_framework.pagination import PageNumberPagination
@@ -167,3 +168,69 @@ class ReviewListView(generics.ListAPIView):
     def get_queryset(self):
         priest_id = self.kwargs['priest_id']
         return Review.objects.filter(purohit_id=priest_id)
+
+class PriestScheduleManageView(generics.ListCreateAPIView, generics.DestroyAPIView):
+    serializer_class = PriestScheduleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = PageNumberPagination
+
+    def get_queryset(self):
+        return PriestSchedule.objects.filter(priest=self.request.user).order_by('busy_date')
+    
+    def create(self, request, *args, **kwargs):
+        if request.user.userprofile.user_type != 'purohit':
+            return Response({"error": "Only priests can manage their schedule"}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(priest=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+class PriestScheduleDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PriestScheduleSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return PriestSchedule.objects.filter(priest=self.request.user)
+    
+class PriestBusyDatesView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, priest_id):
+        try:
+            busy_dates = PriestSchedule.objects.filter(priest_id=priest_id).values_list('busy_date', flat=True).order_by('busy_date')
+
+            return Response({"priest_id": priest_id,"busy_dates": [str(date) for date in busy_dates],"total_busy_dates": busy_dates.count()})
+    
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class PriestBusyDateRangeView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, priest_id):
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        if not start_date_str or not end_date_str:
+            return Response({"error": "start_date and end_date query parameters are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+
+        except ValueError:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        busy_dates = PriestSchedule.objects.filter(priest_id=priest_id, busy_date__gte=start_date, busy_date__lte=end_date).values_list('busy_date', flat=True)
+        busy_dates_set = set(busy_dates)
+
+        calendar={}
+        current_date = start_date
+        while current_date <= end_date:
+            calendar[str(current_date)] = {"is_busy": current_date in busy_dates_set}
+            current_date += datetime.timedelta(days=1)
+
+        return Response({"priest_id": priest_id,"date_range": {"start_date": str(start_date),"end_date": str(end_date)}, "calendar": calendar,"busy_count": len(busy_dates_set)})
