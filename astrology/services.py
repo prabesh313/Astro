@@ -215,15 +215,6 @@ HOROSCOPE_DATABASE = {
 
 
 def get_daily_horoscope(rashi_name, target_date=None):
-    """
-    Fetch daily horoscope.
-    
-    Currently returns mock data (Prokerala free tier limitation).
-    Real data will be integrated when premium API is available.
-    
-    rashi_name: "aries", "taurus", etc.
-    target_date: optional "2025-04-30" (defaults to today)
-    """
     
     if not target_date:
         target_date = str(date.today())
