@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 
 from rituals import serializers
 from .models import Chat, PriestSchedule, Review, UserProfile
-from .serializers import BusyDateSerializer, ChatSerializer, MessageSerializer, PriestListSerializer, PriestScheduleSerializer, PriestSchedulerSerializer, RegisterSerializer, ReviewSerializer,UserProfileSerializer
+from .serializers import BusyDateSerializer, ChatSerializer, MessageSerializer, PriestListSerializer, PriestScheduleSerializer, RegisterSerializer, ReviewSerializer,UserProfileSerializer
 from django.db.models import Q
 from rest_framework import filters
 from rest_framework.pagination import PageNumberPagination
@@ -207,7 +207,7 @@ class PriestBusyDatesView(generics.ListAPIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class PriestBusyDateRangeView(APIView):
+class PriestBusyDatesRangeView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, priest_id):

@@ -1,7 +1,5 @@
-from mailbox import Message
-
 from django.contrib import admin
-from .models import Chat, Review, UserProfile
+from .models import Chat, PriestSchedule, Review, UserProfile,Message
 
 # Register your models here.
 @admin.register(UserProfile)
@@ -24,3 +22,10 @@ class MessageAdmin(admin.ModelAdmin):
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ['jajaman', 'purohit', 'rating', 'created_at']
     list_filter = ['rating', 'created_at']
+
+@admin.register(PriestSchedule)
+class PriestScheduleAdmin(admin.ModelAdmin):
+    list_display = ['priest', 'busy_date', 'event_type', 'event_title', 'created_at']
+    list_filter = ['busy_date', 'event_type']
+    search_fields = ['priest__userprofile__full_name', 'event_title']
+    ordering = ['-busy_date']

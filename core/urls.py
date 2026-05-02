@@ -25,7 +25,7 @@ from rest_framework_simplejwt.views import (
 
 from books.views import BookViewSet
 from rituals.views import RitualViewSet, MantraViewSet
-from users.views import ChatDetailView, ChatListView, MarkMessagesReadView, MessageListView, PriestDetailView, PriestListView, RegisterView, ReviewListView, ReviewView, StartChatView, UserProfileView
+from users.views import ChatDetailView, ChatListView, MarkMessagesReadView, MessageListView, PriestBusyDatesRangeView, PriestBusyDatesView, PriestListView, PriestDetailView, PriestListView, PriestScheduleDetailView, PriestScheduleManageView, RegisterView, ReviewListView, ReviewView, StartChatView, UserProfileView
 from astrology.views import CalendarMonthView, CurrentDateView, DailyHoroscopeView,AllRashisHoroscopeView, FestivalListView, GenerateKundaliView, HoroscopeListView, MyKundaliListView, TodayPanchangView,PanchangByDateView
 
 router = DefaultRouter()
@@ -67,5 +67,10 @@ urlpatterns = [
 
     path('api/reviews/', ReviewView.as_view()),
     path('api/priests/<int:priest_id>/reviews/', ReviewListView.as_view()),
+
+    path('api/my-schedule/', PriestScheduleManageView.as_view()),
+    path('api/my-schedule/<int:pk>/', PriestScheduleDetailView.as_view()),
+    path('api/priests/<int:priest_id>/busy-dates/', PriestBusyDatesView.as_view()),
+    path('api/priests/<int:priest_id>/busy-dates-range/', PriestBusyDatesRangeView.as_view()),
 
     ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
