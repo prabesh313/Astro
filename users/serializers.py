@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    user_type = serializers.CharField(required=True)
+    user_type = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
@@ -28,6 +28,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     user_type_display = serializers.CharField(
         source='get_user_type_display', read_only=True
     )
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
@@ -35,6 +36,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'birth_latitude', 'birth_longitude', 'is_verified','specializations', 'experience_years', 'hourly_rate',
             'phone_number', 'address', 'bio', 'profile_image','average_rating', 'total_reviews', 'created_at'
         ]
+
+    def get_profile_image(self, obj):
+            request = self.context.get('request')
+            if obj.profile_image and hasattr(obj.profile_image, 'url'):
+                if request:
+                    return request.build_absolute_uri(obj.profile_image.url)
+                return obj.profile_image.url
+            return None
 
 
 class PriestListSerializer(serializers.ModelSerializer):
@@ -99,7 +108,7 @@ class PriestScheduleSerializer(serializers.ModelSerializer):
     event_type_display = serializers.CharField(source='get_event_type_display', read_only=True)
     class Meta:
         model = PriestSchedule
-        fields = ['id', 'busy_date', 'event_type', 'event_type_display','event_title', 'start_time', 'end_time', 'location', 'contact_person', 'phone_number', 'created_at','notes' 'updated_at']
+        fields = ['id', 'busy_date', 'event_type', 'event_type_display','event_title', 'start_time', 'end_time', 'location', 'contact_person', 'phone_number', 'created_at','notes', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
