@@ -28,16 +28,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
     user_type_display = serializers.CharField(
         source='get_user_type_display', read_only=True
     )
-    profile_image = serializers.SerializerMethodField()
+    profile_image_url = serializers.SerializerMethodField()
+    profile_image= serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = UserProfile
         fields = ['id', 'username', 'email', 'user_type', 'user_type_display','full_name', 'birth_date', 'birth_time', 'birth_place',
             'birth_latitude', 'birth_longitude', 'is_verified','specializations', 'experience_years', 'hourly_rate',
-            'phone_number', 'address', 'bio', 'profile_image','average_rating', 'total_reviews', 'created_at'
+            'phone_number', 'address', 'bio', 'profile_image','profile_image_url', 'average_rating', 'total_reviews', 'created_at'
         ]
 
-    def get_profile_image(self, obj):
+    def get_profile_image_url(self, obj):
             request = self.context.get('request')
             if obj.profile_image and hasattr(obj.profile_image, 'url'):
                 if request:

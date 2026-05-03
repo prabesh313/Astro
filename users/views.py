@@ -30,7 +30,7 @@ class UserProfileView(APIView):
     def get(self,request):
         try:
             profile=UserProfile.objects.get(user=request.user)
-            serializer=UserProfileSerializer(profile)
+            serializer=UserProfileSerializer(profile, context={'request': request})
             return Response(serializer.data)
         except UserProfile.DoesNotExist:
             return Response(
@@ -44,7 +44,7 @@ class UserProfileView(APIView):
                 {"message":"Profile already exists.Use PUT to update"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer=UserProfileSerializer(data=request.data)
+        serializer=UserProfileSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -58,7 +58,7 @@ class UserProfileView(APIView):
                 {"message":"Profile not created yet.Use POST to create"},
                 status=status.HTTP_404_NOT_FOUND
             )
-        serializer=UserProfileSerializer(profile, data=request.data, partial=True)
+        serializer=UserProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
