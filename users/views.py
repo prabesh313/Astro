@@ -1,6 +1,5 @@
 import datetime
-from email.message import Message
-from time import timezone
+from django.utils import timezone
 from warnings import filters
 
 import django_filters
@@ -12,8 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
 
-from rituals import serializers
-from .models import Chat, PriestSchedule, Review, UserProfile
+from django.db.models import Q
+from .models import Chat,Message, PriestSchedule, Review, UserProfile
 from .serializers import BusyDateSerializer, ChatSerializer, MessageSerializer, PriestListSerializer, PriestScheduleSerializer, RegisterSerializer, ReviewSerializer,UserProfileSerializer
 from django.db.models import Q
 from rest_framework import filters
@@ -93,12 +92,12 @@ class PriestDetailView(generics.RetrieveAPIView):
 
 
 class ChatListView(generics.ListAPIView):
-    serializer_class = ChatSerializer
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = PageNumberPagination
+    serializer_class = ChatSerializer
 
     def get_queryset(self):
-        return Chat.objects.filter(Q(jajaman=self.request.user) | Q(purohit=self.request.user)).prefetch_related('messages')
+        user=self.request.user
+        return Chat.objects.filter(Q(participant1=user) | Q(participant2=user)).order_by('-updated_at')
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -110,26 +109,28 @@ class ChatDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Chat.objects.filter(Q(jajaman=self.request.user) | Q(purohit=self.request.user))
+        return Chat.objects.filter(Q(participant1=self.request.user) | Q(participant2=self.request.user))
     
 
 class StartChatView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        purohit_id = request.data.get('purohit_id')
+        other_user_id= request.data.get('user_id')
         try:
-            purohit_user = User.objects.get(id=purohit_id)
-            purohit_profile = UserProfile.objects.get(user=purohit_user, user_type='purohit')
+            other_user = User.objects.get(id=other_user_id)
         except:
-            return Response({"error": "Priest not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        chat , created = Chat.objects.get_or_create(jajaman=request.user, purohit=purohit_user)
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        if other_user == request.user:
+            return Response({"error": "You cannot chat with yourself"}, status=status.HTTP_400_BAD_REQUEST)
+        p1,p2 = (request.user, other_user) if request.user.id < other_user.id else (other_user, request.user)
+
+        chat , created = Chat.objects.get_or_create(participant1=p1, participant2=p2)
         serializer = ChatSerializer(chat, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
-class MessageListView(generics.ListAPIView):
+class MessageListView(generics.ListCreateAPIView):
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = PageNumberPagination
@@ -145,7 +146,7 @@ class MessageListView(generics.ListAPIView):
         except Chat.DoesNotExist:
             return Response({"error": "Chat not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        if request.user != chat.jajaman and request.user != chat.purohit:
+        if request.user != chat.participant1 and request.user != chat.participant2:
             return Response({"error": "Not a participant of this chat"}, status=status.HTTP_403_FORBIDDEN)
         
         message=Message.objects.create(chat=chat, sender=request.user, message_text=request.data.get('message_text', ''),attachment=request.FILES.get('attachment'))
@@ -162,9 +163,10 @@ class MarkMessagesReadView(APIView):
         except Chat.DoesNotExist:
             return Response({"error": "Chat not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        messages = chat.messages.filter(is_read=False).exclude(sender=request.user)
-        messages.update(is_read=True, read_at=timezone.now())
-
+        if request.user != chat.participant1 and request.user != chat.participant2:
+            return Response({"error": "Not a participant of this chat"}, status=status.HTTP_403_FORBIDDEN)
+        
+        chat.messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True, read_at=timezone.now())
         return Response({"message": "Messages marked as read"})
     
 class ReviewView(generics.CreateAPIView):
@@ -212,7 +214,8 @@ class PriestBusyDatesView(generics.ListAPIView):
 
     def get(self, request, priest_id):
         try:
-            busy_dates = PriestSchedule.objects.filter(priest_id=priest_id).values_list('busy_date', flat=True).order_by('busy_date')
+            profile = UserProfile.objects.get(id=priest_id)
+            busy_dates = PriestSchedule.objects.filter(priest=profile.user).values_list('busy_date', flat=True).order_by('busy_date')
 
             return Response({"priest_id": priest_id,"busy_dates": [str(date) for date in busy_dates],"total_busy_dates": busy_dates.count()})
     

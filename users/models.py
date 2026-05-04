@@ -40,23 +40,22 @@ class UserProfile(models.Model):
 
 
 class Chat(models.Model):
-    jajaman = models.ForeignKey(User,on_delete=models.CASCADE,related_name='chats_as_customer')
-    purohit = models.ForeignKey(User,on_delete=models.CASCADE,related_name='chats_as_priest')
-    
+    participant1 = models.ForeignKey(User,on_delete=models.CASCADE,related_name='chats_as_participant1')
+    participant2 = models.ForeignKey(User,on_delete=models.CASCADE,related_name='chats_as_participant2')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"Chat: {self.jajaman.username} <--> {self.purohit.username}"
+        return f"Chat: {self.participant1.username} <--> {self.participant2.username}"
 
     class Meta:
-        unique_together = ('jajaman', 'purohit')
+        unique_together = ('participant1', 'participant2')
         ordering = ['-updated_at']
 
 
 class Message(models.Model):
-    """Individual messages in a chat"""
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message_text = models.TextField()

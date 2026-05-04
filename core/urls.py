@@ -60,8 +60,8 @@ urlpatterns = [
     path('api/priests/<int:pk>/', PriestDetailView.as_view()),
 
     path('api/chats/', ChatListView.as_view()),
-    path('api/chats/<int:pk>/', ChatDetailView.as_view()),
     path('api/chats/start/', StartChatView.as_view()),
+    path('api/chats/<int:pk>/', ChatDetailView.as_view()),
     path('api/chats/<int:chat_id>/messages/', MessageListView.as_view()),
     path('api/chats/<int:chat_id>/mark-read/', MarkMessagesReadView.as_view()),
 

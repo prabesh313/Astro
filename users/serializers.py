@@ -49,10 +49,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class PriestListSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
     
     class Meta:
         model = UserProfile
-        fields = ['id', 'username', 'full_name', 'specializations', 'experience_years','hourly_rate', 'average_rating', 'total_reviews', 'profile_image','is_verified', 'bio', 'address'
+        fields = ['id', 'user_id', 'username', 'full_name', 'specializations', 'experience_years','hourly_rate', 'average_rating', 'total_reviews', 'profile_image','is_verified', 'bio', 'address'
         ]
 
 
@@ -67,30 +68,59 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class ChatSerializer(serializers.ModelSerializer):
-    jajaman_username = serializers.CharField(source='jajaman.username', read_only=True)
-    purohit_username = serializers.CharField(source='purohit.username', read_only=True)
-    purohit_profile = PriestListSerializer(source='purohit.userprofile', read_only=True)
+    other_user_id = serializers.SerializerMethodField()
+    other_username= serializers.SerializerMethodField()
+    other_user_profile = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     unread_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Chat
-        fields = [
-            'id', 'jajaman', 'jajaman_username', 'purohit', 'purohit_username','purohit_profile', 'is_active', 'created_at', 'updated_at','last_message', 'unread_count'
-        ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = ['id', 'other_user_id', 'other_username', 'other_user_profile','last_message', 'unread_count', 'created_at', 'updated_at']
+    
+    def get_other_user(self, obj):
+        request = self.context.get('request')
+        if obj.participant1==request.user:
+            return obj.participant2
+        return obj.participant1
+    
+    def get_other_user_id(self, obj):
+        return self.get_other_user(obj).id
+    
+    def get_other_username(self, obj):
+        return self.get_other_user(obj).username
+    
+    def get_other_user_profile(self, obj):
+        other = self.get_other_user(obj)
+        try:
+            profile = other.userprofile
+            request = self.context.get('request')
+            image_url=None
+            if profile.profile_image:
+                image_url=request.build_absolute_uri(profile.profile_image.url) if request else profile.profile_image.url
+            return {
+                'id': profile.id,
+                'full_name': profile.full_name,
+                'profile_image': image_url,
+                'user_type': profile.user_type,
+            }
+        except:
+            return None
 
     def get_last_message(self, obj):
-        last_msg = obj.messages.order_by('-created_at').first()
-        if last_msg:
-            return MessageSerializer(last_msg).data
+        last= obj.messages.order_by('-created_at').first()
+        if last:
+            return{
+                'message_text': last.message_text,
+                'sender_username': last.sender.username,
+                'created_at': last.created_at,
+            }
         return None
 
     def get_unread_count(self, obj):
         request = self.context.get('request')
-        if request:
-            return obj.messages.filter(is_read=False).exclude(sender=request.user).count()
-        return 0
+        return obj.messages.filter(is_read=False).exclude(sender=request.user).count()
+        
 
 
 class ReviewSerializer(serializers.ModelSerializer):

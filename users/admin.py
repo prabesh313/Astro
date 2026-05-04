@@ -10,7 +10,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Chat)
 class ChatAdmin(admin.ModelAdmin):
-    list_display = ['jajaman', 'purohit', 'created_at', 'is_active']
+    list_display = ['participant1', 'participant2', 'created_at', 'is_active']
     list_filter = ['created_at', 'is_active']
 
 @admin.register(Message)
