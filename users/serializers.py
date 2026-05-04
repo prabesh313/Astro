@@ -52,7 +52,7 @@ class PriestListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserProfile
-        fields = ['id', 'username', 'full_name', 'specializations', 'experience_years','hourly_rate', 'average_rating', 'total_reviews', 'profile_image','is_verified', 'bio'
+        fields = ['id', 'username', 'full_name', 'specializations', 'experience_years','hourly_rate', 'average_rating', 'total_reviews', 'profile_image','is_verified', 'bio', 'address'
         ]
 
 

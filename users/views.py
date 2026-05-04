@@ -3,6 +3,9 @@ from email.message import Message
 from time import timezone
 from warnings import filters
 
+import django_filters
+from django_filters.rest_framework import DjangoFilterBackend
+
 from django.shortcuts import render
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -63,13 +66,23 @@ class UserProfileView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class PriestFilter(django_filters.FilterSet):
+    address = django_filters.CharFilter( lookup_expr='icontains')
+
+    class Meta:
+        model = UserProfile
+        fields = ['address']
+    
 
 class PriestListView(generics.ListAPIView):
     queryset=UserProfile.objects.filter(user_type='purohit', is_verified=True)
     serializer_class=PriestListSerializer
     permission_classes=[permissions.AllowAny]
-    filter_backends = [filters.SearchFilter,filters.OrderingFilter]
-    search_fields = ['full_name', 'specializations', 'bio']
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['full_name', 'specializations' ]
+    filterset_class = PriestFilter
     ordering_fields = ['experience_years', 'average_rating']
     ordering = ['-average_rating' ]
     pagination_class = PageNumberPagination
