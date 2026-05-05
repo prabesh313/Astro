@@ -93,18 +93,22 @@ class ChatSerializer(serializers.ModelSerializer):
     def get_other_user_profile(self, obj):
         other = self.get_other_user(obj)
         try:
-            profile = other.userprofile
+            profile = UserProfile.objects.get(user=other)
             request = self.context.get('request')
             image_url=None
+            
             if profile.profile_image:
-                image_url=request.build_absolute_uri(profile.profile_image.url) if request else profile.profile_image.url
+                image_url = request.build_absolute_uri(profile.profile_image.url) if request else f'http://127.0.0.1:8000{profile.profile_image.url}'
+        
+            
+    
             return {
                 'id': profile.id,
                 'full_name': profile.full_name,
-                'profile_image': image_url,
+                'profile_image':image_url,
                 'user_type': profile.user_type,
             }
-        except:
+        except UserProfile.DoesNotExist:
             return None
 
     def get_last_message(self, obj):
