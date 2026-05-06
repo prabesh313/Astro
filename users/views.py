@@ -12,14 +12,31 @@ from rest_framework.views import APIView
 from django.contrib.auth.models import User
 
 from django.db.models import Q
+
+from rituals import serializers
 from .models import Chat,Message, PriestSchedule, Review, UserProfile
 from .serializers import BusyDateSerializer, ChatSerializer, MessageSerializer, PriestListSerializer, PriestScheduleSerializer, RegisterSerializer, ReviewSerializer,UserProfileSerializer
 from django.db.models import Q
 from rest_framework import filters
 from rest_framework.pagination import PageNumberPagination
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 
 # Create your views here.
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data['username'] = self.user.username
+        data['user_id'] = self.user.id
+        return data
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
 class RegisterView(generics.CreateAPIView):
     queryset=User.objects.all()
     serializer_class=RegisterSerializer
@@ -133,7 +150,7 @@ class StartChatView(APIView):
 class MessageListView(generics.ListCreateAPIView):
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
-    pagination_class = PageNumberPagination
+    pagination_class = None
 
     def get_queryset(self):
         chat_id = self.kwargs['chat_id']
@@ -174,16 +191,51 @@ class ReviewView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(jajaman=self.request.user)
+        purohit_id = self.request.data.get('purohit_id')
+        try:
+            purohit_profile = UserProfile.objects.get(id=purohit_id, user_type='purohit')
+            purohit_user = purohit_profile.user
+        except UserProfile.DoesNotExist:
+            raise serializers.ValidationError("Priest not found")
+        
+        from django.db.models import Q
+        has_chatted = Chat.objects.filter(
+            Q(participant1=self.request.user, participant2=purohit_user) |
+            Q(participant1=purohit_user, participant2=self.request.user)
+        ).exists()
+
+        if not has_chatted:
+            raise serializers.ValidationError("You can only review priests you have chatted with")
+
+        # prevent duplicate reviews
+        if Review.objects.filter(jajaman=self.request.user, purohit=purohit_user).exists():
+            raise serializers.ValidationError("You have already reviewed this priest")
+
+        serializer.save(jajaman=self.request.user, purohit=purohit_user)
+
+        # update average rating on UserProfile
+        self.update_priest_rating(purohit_user)
+
+    def update_priest_rating(self, purohit_user):
+        from django.db.models import Avg
+        reviews = Review.objects.filter(purohit=purohit_user)
+        avg = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+        UserProfile.objects.filter(user=purohit_user).update(
+            average_rating=round(avg, 1),
+            total_reviews=reviews.count()
+        )
 
 class ReviewListView(generics.ListAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        priest_id = self.kwargs['priest_id']
-        return Review.objects.filter(purohit_id=priest_id)
-
+        priest_id = self.kwargs['priest_id']  # UserProfile.id
+        try:
+            profile = UserProfile.objects.get(id=priest_id)
+            return Review.objects.filter(purohit=profile.user)  # filter by User
+        except UserProfile.DoesNotExist:
+            return Review.objects.none()
 class PriestScheduleManageView(generics.ListCreateAPIView, generics.DestroyAPIView):
     serializer_class = PriestScheduleSerializer
     permission_classes = [permissions.IsAuthenticated]

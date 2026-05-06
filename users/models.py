@@ -77,10 +77,10 @@ class Message(models.Model):
 
 
 class Review(models.Model):
-    purohit = models.ForeignKey(User,on_delete=models.CASCADE,related_name='reviews')
-    jajaman = models.ForeignKey(User,on_delete=models.CASCADE,related_name='given_reviews')
+    purohit = models.ForeignKey(User,on_delete=models.CASCADE,related_name='reviews_received')
+    jajaman = models.ForeignKey(User,on_delete=models.CASCADE,related_name='reviews_given')
     
-    rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])  # 1-5 stars
+    rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
     comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

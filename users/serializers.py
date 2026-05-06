@@ -96,7 +96,7 @@ class ChatSerializer(serializers.ModelSerializer):
             profile = UserProfile.objects.get(user=other)
             request = self.context.get('request')
             image_url=None
-            
+
             if profile.profile_image:
                 image_url = request.build_absolute_uri(profile.profile_image.url) if request else f'http://127.0.0.1:8000{profile.profile_image.url}'
         
@@ -129,15 +129,11 @@ class ChatSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     jajaman_username = serializers.CharField(source='jajaman.username', read_only=True)
-    jajaman_name = serializers.CharField(source='jajaman.userprofile.full_name', read_only=True)
 
     class Meta:
         model = Review
-        fields = [
-            'id', 'purohit', 'jajaman', 'jajaman_username', 'jajaman_name','rating', 'comment', 'created_at'
-        ]
-        read_only_fields = ['id', 'created_at']
-
+        fields = ['id', 'jajaman_username', 'rating', 'comment', 'created_at'] 
+        read_only_fields = ['id', 'jajaman_username', 'created_at']
 
 class PriestScheduleSerializer(serializers.ModelSerializer):
     event_type_display = serializers.CharField(source='get_event_type_display', read_only=True)

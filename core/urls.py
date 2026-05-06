@@ -25,7 +25,7 @@ from rest_framework_simplejwt.views import (
 
 from books.views import BookViewSet
 from rituals.views import RitualViewSet, MantraViewSet
-from users.views import ChatDetailView, ChatListView, MarkMessagesReadView, MessageListView, PriestBusyDatesRangeView, PriestBusyDatesView, PriestListView, PriestDetailView, PriestListView, PriestScheduleDetailView, PriestScheduleManageView, RegisterView, ReviewListView, ReviewView, StartChatView, UserProfileView
+from users.views import ChatDetailView, ChatListView, CustomTokenObtainPairView, MarkMessagesReadView, MessageListView, PriestBusyDatesRangeView, PriestBusyDatesView, PriestListView, PriestDetailView, PriestListView, PriestScheduleDetailView, PriestScheduleManageView, RegisterView, ReviewListView, ReviewView, StartChatView, UserProfileView
 from astrology.views import CalendarMonthView, CurrentDateView, DailyHoroscopeView,AllRashisHoroscopeView, FestivalListView, GenerateKundaliView, HoroscopeListView, MyKundaliListView, TodayPanchangView,PanchangByDateView
 
 router = DefaultRouter()
@@ -38,7 +38,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
 
     path('api/users/register/', RegisterView.as_view()),
-    path('api/users/login/', TokenObtainPairView.as_view()),
+    path('api/users/login/', CustomTokenObtainPairView.as_view()),
     path('api/users/token/refresh/', TokenRefreshView.as_view()),
     path('api/users/profile/', UserProfileView.as_view()),
 
