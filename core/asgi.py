@@ -8,6 +8,10 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
 """
 
 import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+django.setup()
 
 from django.core.asgi import get_asgi_application
 
@@ -17,7 +21,7 @@ from django.urls import path
 from users.middleware import JWTAuthMiddleware
 from users.consumers import ChatConsumer
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+
 
 application = ProtocolTypeRouter({
     'http': get_asgi_application(),

@@ -1,50 +1,56 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import User
 from .models import Chat, Message
 
+
+SIGNALING_TYPES = {'call_offer', 'call_answer', 'ice_candidate', 'call_end', 'call_reject', 'call_request'}
+
 class ChatConsumer(AsyncWebsocketConsumer):
-    # handler for WebSocket connection
+    #helps in handling WebSocket connections for chat rooms, including authentication, message handling, and WebRTC signaling
     async def connect(self):
         self.chat_id = self.scope['url_route']['kwargs']['chat_id']
         self.room_group_name = f'chat_{self.chat_id}'
         self.user = self.scope['user']
 
-        # reject if not authenticated
         if not self.user.is_authenticated:
             await self.close()
             return
 
-        # reject if user is not part of this chat
         if not await self.is_participant():
             await self.close()
             return
 
-        # accept the connection and add to the group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
-
-    # handler for WebSocket disconnection
+    #helps in handling the disconnection of a WebSocket connection from a chat room
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
-    # handler for messages received from WebSocket clients
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+
+    #helps in handling incoming WebSocket messages, distinguishing between chat messages and WebRTC signaling events, and processing them accordingly
     async def receive(self, text_data):
-        data = json.loads(text_data)
+        try:
+            data = json.loads(text_data)
+        except json.JSONDecodeError:
+            return
+
+        msg_type = data.get('type')
+
+        if msg_type == 'chat_message':
+            await self._handle_chat_message(data)
+
+        elif msg_type in SIGNALING_TYPES:
+            await self._handle_signaling(data)
+
+    #helps in processing incoming chat messages, saving them to the database, and broadcasting them to all participants in the chat room
+    async def _handle_chat_message(self, data):
         message_text = data.get('message_text', '').strip()
         if not message_text:
             return
 
-        # save message to DB
         message = await self.save_message(message_text)
 
-        # broadcast to everyone in the chat room
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -56,16 +62,38 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'created_at': message.created_at.isoformat(),
             }
         )
-    # handler for messages sent to the group, helps to send the message to WebSocket clients
+
+    #helps in handling WebRTC signaling events, relaying them to the chat room group with sender identity
+    async def _handle_signaling(self, data):
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {**data, 'sender_username': self.user.username}
+        )
+
+    #helps in sending chat messages to WebSocket clients when a 'chat_message' event is received from the channel layer group
     async def chat_message(self, event):
-        await self.send(text_data=json.dumps({
-            'id': event['id'],
-            'message_text': event['message_text'],
-            'sender_username': event['sender_username'],
-            'is_read': event['is_read'],
-            'created_at': event['created_at'],
-        }))
-    # helper method to check if the user is a participant of the chat
+        await self.send(text_data=json.dumps(event))
+
+
+    async def call_offer(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def call_answer(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def ice_candidate(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def call_end(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def call_reject(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    async def call_request(self, event):
+        await self.send(text_data=json.dumps(event))
+
+    #helps in checking if the authenticated user is a participant in the chat room, allowing or denying access accordingly
     @database_sync_to_async
     def is_participant(self):
         from django.db.models import Q
@@ -73,8 +101,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             Q(participant1=self.user) | Q(participant2=self.user),
             id=self.chat_id
         ).exists()
-
-    # helper method to save the message to the database
+    
+    #helps in saving incoming chat messages to the database, associating them with the correct chat room and sender
     @database_sync_to_async
     def save_message(self, message_text):
         chat = Chat.objects.get(id=self.chat_id)
