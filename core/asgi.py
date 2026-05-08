@@ -19,7 +19,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from django.urls import path
 from users.middleware import JWTAuthMiddleware
-from users.consumers import ChatConsumer
+from users.consumers import ChatConsumer, CallConsumer
 
 
 
@@ -28,6 +28,7 @@ application = ProtocolTypeRouter({
     'websocket': JWTAuthMiddleware(
         URLRouter([
             path("ws/chats/<int:chat_id>/", ChatConsumer.as_asgi()),
+            path("ws/calls/<int:chat_id>/", CallConsumer.as_asgi()),
         ])
     ),
 })
