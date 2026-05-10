@@ -25,7 +25,7 @@ class UserProfile(models.Model):
     phone_number = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
     bio = models.TextField(blank=True)
-    profile_image = models.ImageField(upload_to='priest_profiles/', blank=True)
+    profile_image = models.ImageField(upload_to='profile_images/', blank=True)
     
     average_rating = models.FloatField(default=0)
     total_reviews = models.IntegerField(default=0)
@@ -60,7 +60,7 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message_text = models.TextField()
     attachment = models.FileField(upload_to='chat_attachments/', blank=True, null=True)
-    
+    is_system = models.BooleanField(default=False)
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
