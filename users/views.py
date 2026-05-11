@@ -302,3 +302,16 @@ class PriestBusyDatesRangeView(APIView):
             current_date += datetime.timedelta(days=1)
 
         return Response({"priest_id": priest_id,"date_range": {"start_date": str(start_date),"end_date": str(end_date)}, "calendar": calendar,"busy_count": len(busy_dates_set)})
+
+
+class PublicUserProfileView(generics.RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        user_id = self.kwargs['user_id']
+        try:
+            return UserProfile.objects.get(user__id=user_id)
+        except UserProfile.DoesNotExist:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Profile not found")
