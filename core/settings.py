@@ -179,24 +179,33 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS=True
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://astro-production-6c88.up.railway.app',
-    'https://tourmaline-cheesecake-fc8765.netlify.app',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:8000',
-    'http://127.0.0.1:8000',
+    "https://astro-production-6c88.up.railway.app",
+    "http://astro-production-6c88.up.railway.app",
+    "https://tourmaline-cheesecake-fc8765.netlify.app",
+    "http://localhost:3000",
 ]
 
 CSRF_COOKIE_HTTPONLY = False  #Allow JavaScript to read CSRF token
-CSRF_COOKIE_SECURE = not DEBUG  # Use HTTPS in production, HTTP in development
 CSRF_COOKIE_SAMESITE = 'Lax'
 
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+
 if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = False  # Let Railway handle redirects
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SAMESITE = "Lax"
+
+SECURE_SSL_REDIRECT = False
 
