@@ -177,3 +177,5 @@ SIMPLE_JWT = {
 
 
 CORS_ALLOW_ALL_ORIGINS=True
+
+CSRF_TRUSTED_ORIGINS = ['https://astro-production-6c88.up.railway.app']
