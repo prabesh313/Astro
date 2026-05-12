@@ -178,4 +178,12 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS=True
 
-CSRF_TRUSTED_ORIGINS = ['https://astro-production-6c88.up.railway.app']
+CSRF_TRUSTED_ORIGINS = [
+    'https://astro-production-6c88.up.railway.app',
+    'https://tourmaline-cheesecake-fc8765.netlify.app',
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
