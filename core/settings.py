@@ -180,13 +180,11 @@ CORS_ALLOW_ALL_ORIGINS=True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://astro-production-6c88.up.railway.app",
-    "http://astro-production-6c88.up.railway.app",
     "https://tourmaline-cheesecake-fc8765.netlify.app",
     "http://localhost:3000",
+    'http://127.0.0.1:5500',
 ]
 
-CSRF_COOKIE_HTTPONLY = False  #Allow JavaScript to read CSRF token
-CSRF_COOKIE_SAMESITE = 'Lax'
 
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -202,10 +200,10 @@ if not DEBUG:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_HTTPONLY  = False
+CSRF_COOKIE_SECURE    = True
+CSRF_COOKIE_SAMESITE  = 'None'
+SESSION_COOKIE_SECURE   = True 
+SESSION_COOKIE_SAMESITE = 'None'
 
-SECURE_SSL_REDIRECT = False
 
