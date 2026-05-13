@@ -183,6 +183,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://tourmaline-cheesecake-fc8765.netlify.app",
     "http://localhost:3000",
     'http://127.0.0.1:5500',
+    'http://localhost:5500',
 ]
 
 
@@ -203,6 +204,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CSRF_COOKIE_HTTPONLY  = False
 CSRF_COOKIE_SECURE    = True
 CSRF_COOKIE_SAMESITE  = 'None'
+CSRF_COOKIE_DOMAIN = None
+CSRF_USE_SESSIONS  = False
 SESSION_COOKIE_SECURE   = True 
 SESSION_COOKIE_SAMESITE = 'None'
 
