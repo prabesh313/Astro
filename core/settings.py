@@ -179,18 +179,10 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_ALL_ORIGINS=True
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://astro-production-6c88.up.railway.app',
-    'http://astro-production-6c88.up.railway.app',
 
-    'https://*.up.railway.app', 
-    'http://*.up.railway.app', 
-    'https://tourmaline-cheesecake-fc8765.netlify.app',
-    'https://*.netlify.app',
-    'http://localhost:3000',
-    'http://127.0.0.1:5500',
-    'http://localhost:5500',
-]
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://astro-production-6c88.up.railway.app').split(',')
 
 
 
