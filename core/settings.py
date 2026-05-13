@@ -159,33 +159,32 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
-
-
-
+# REST Framework Configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PAGINATION_CLASS':
-        'rest_framework.pagination.PageNumberPagination',
-        'PAGE_SIZE': 10,
-    
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
 
-CORS_ALLOW_ALL_ORIGINS=True
+# CORS Configuration
+CORS_ALLOW_ALL_ORIGINS = True
 
 
-CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS',
-    default='https://astro-production-6c88.up.railway.app').split(',')
-
-import sys
-print(f"CSRF_TRUSTED_ORIGINS = {CSRF_TRUSTED_ORIGINS}", file=sys.stderr, flush=True)
+# CSRF Configuration
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='https://astro-production-6c88.up.railway.app,https://tourmaline-cheesecake-fc8765.netlify.app'
+    ).split(',')
+]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_PORT = True
@@ -199,13 +198,13 @@ if not DEBUG:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-
-CSRF_COOKIE_SECURE    = True
-CSRF_COOKIE_SAMESITE  = 'Lax'
-CSRF_COOKIE_HTTPONLY  = False
+# CSRF Cookie Configuration
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_DOMAIN = None
-CSRF_USE_SESSIONS  = False
-SESSION_COOKIE_SECURE   = True 
+CSRF_USE_SESSIONS = False
+
+# Session Cookie Configuration
+SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-
-
