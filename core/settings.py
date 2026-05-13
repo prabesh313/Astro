@@ -14,6 +14,7 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import dj_database_url
+import sys
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -178,13 +179,23 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 
 
-# CSRF Configuration
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip() for origin in config(
-        'CSRF_TRUSTED_ORIGINS',
-        default='https://astro-production-6c88.up.railway.app,https://tourmaline-cheesecake-fc8765.netlify.app'
-    ).split(',')
-]
+# CSRF Configuration - Handle Railway's automatic quotes
+_csrf_origins_str = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://astro-production-6c88.up.railway.app,https://tourmaline-cheesecake-fc8765.netlify.app'
+)
+
+# Remove quotes if Railway added them automatically
+_csrf_origins_str = _csrf_origins_str.strip('"').strip("'")
+
+# Split by comma and strip whitespace from each origin
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_origins_str.split(',')]
+
+# Debug logging
+if DEBUG:
+    print(f"DEBUG: Raw CSRF string: {_csrf_origins_str}", file=sys.stderr, flush=True)
+    print(f"DEBUG: Final CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}", file=sys.stderr, flush=True)
+
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_PORT = True
