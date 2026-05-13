@@ -104,6 +104,7 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     'default': dj_database_url.config(
+        env='DATABASE_PUBLIC_URL',
         default='sqlite:///' + str(BASE_DIR / 'db.sqlite3')
     )
 }
