@@ -179,9 +179,11 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS=True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://astro-production-6c88.up.railway.app",
-    "https://tourmaline-cheesecake-fc8765.netlify.app",
-    "http://localhost:3000",
+    'https://astro-production-6c88.up.railway.app',
+    'https://*.up.railway.app', 
+    'https://tourmaline-cheesecake-fc8765.netlify.app',
+    'https://*.netlify.app',
+    'http://localhost:3000',
     'http://127.0.0.1:5500',
     'http://localhost:5500',
 ]
@@ -194,7 +196,6 @@ USE_X_FORWARDED_PORT = True
 
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = False  # Let Railway handle redirects
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
