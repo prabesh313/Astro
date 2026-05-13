@@ -181,7 +181,10 @@ CORS_ALLOW_ALL_ORIGINS=True
 
 CSRF_TRUSTED_ORIGINS = [
     'https://astro-production-6c88.up.railway.app',
+    'http://astro-production-6c88.up.railway.app',
+
     'https://*.up.railway.app', 
+    'http://*.up.railway.app', 
     'https://tourmaline-cheesecake-fc8765.netlify.app',
     'https://*.netlify.app',
     'http://localhost:3000',
