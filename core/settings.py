@@ -184,7 +184,8 @@ CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
     default='https://astro-production-6c88.up.railway.app').split(',')
 
-
+import sys
+print(f"CSRF_TRUSTED_ORIGINS = {CSRF_TRUSTED_ORIGINS}", file=sys.stderr, flush=True)
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_PORT = True
