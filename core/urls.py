@@ -14,6 +14,9 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 from django.contrib import admin
 from django.urls import path,include
 from django.conf import settings
@@ -33,7 +36,22 @@ router.register(r'books', BookViewSet)
 router.register(r'rituals', RitualViewSet)
 router.register(r'mantras', MantraViewSet)
 
+
+@csrf_exempt
+def debug_headers(request):
+    return JsonResponse({
+        'HTTP_ORIGIN': request.META.get('HTTP_ORIGIN', 'none'),
+        'HTTP_HOST': request.META.get('HTTP_HOST', 'none'),
+        'HTTP_X_FORWARDED_HOST': request.META.get('HTTP_X_FORWARDED_HOST', 'none'),
+        'HTTP_X_FORWARDED_PROTO': request.META.get('HTTP_X_FORWARDED_PROTO', 'none'),
+        'SERVER_NAME': request.META.get('SERVER_NAME', 'none'),
+        'SERVER_PORT': request.META.get('SERVER_PORT', 'none'),
+    })
+
+
+
 urlpatterns = [
+    path('debug-headers/', debug_headers),
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
 
