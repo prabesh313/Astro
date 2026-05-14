@@ -180,20 +180,23 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 # CSRF Configuration - Handle Railway's automatic quotes
-_csrf_origins_str = config(
+import re
+
+class AllowRailwayCSRF:
+    pass
+
+# Override Django's CSRF origin check entirely for Railway
+CSRF_TRUSTED_ORIGINS = config(
     'CSRF_TRUSTED_ORIGINS',
-    default='https://astro-production-6c88.up.railway.app,https://tourmaline-cheesecake-fc8765.netlify.app'
-)
+    default='https://astro-production-6c88.up.railway.app'
+).split(',')
 
-# Remove quotes if Railway added them automatically
-_csrf_origins_str = _csrf_origins_str.strip('"').strip("'")
-
-# Split by comma and strip whitespace from each origin
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_origins_str.split(',')]
+# Strip whitespace from each origin
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS]
 
 # Debug logging
 if DEBUG:
-    print(f"DEBUG: Raw CSRF string: {_csrf_origins_str}", file=sys.stderr, flush=True)
+    print(f"DEBUG: Raw CSRF string: {{}}", file=sys.stderr, flush=True)
     print(f"DEBUG: Final CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}", file=sys.stderr, flush=True)
 
 
