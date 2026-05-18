@@ -15,6 +15,7 @@ from datetime import timedelta
 from decouple import config
 import dj_database_url
 import sys
+import urllib.parse
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -90,13 +91,29 @@ TEMPLATES = [
 ASGI_APPLICATION = 'core.asgi.application'
 
 redis_url = config('REDIS_URL', default='redis://localhost:6379')
+parsed = urllib.parse.urlparse(redis_url)
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [redis_url],
+            'hosts': [{
+                'host': parsed.hostname,
+                'port': parsed.port or 6379,
+                'password': parsed.password or None,
+                'username': parsed.username or 'default',
+            }],
         },
     },
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': redis_url,
+        'OPTIONS': {
+            'PASSWORD': parsed.password,
+        }
+    }
 }
 
 
@@ -178,11 +195,6 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 
 
-# CSRF Configuration - Handle Railway's automatic quotes
-import re
-
-class AllowRailwayCSRF:
-    pass
 
 # Override Django's CSRF origin check entirely for Railway
 CSRF_TRUSTED_ORIGINS = config(
@@ -200,6 +212,7 @@ if DEBUG:
 
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
 
