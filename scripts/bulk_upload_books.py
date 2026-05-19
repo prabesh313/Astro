@@ -1,8 +1,13 @@
 import os
+import sys
 import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-django.setup()
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+
+django.setup()
 from django.core.files import File
 from books.models import Book, BookCategory
 

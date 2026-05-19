@@ -174,11 +174,6 @@ class CalendarMonthView(APIView):
         return months[month - 1] if 1 <= month <= 12 else 'Unknown'
 
 class FestivalListView(APIView):
-    """
-    GET /api/astrology/festivals/
-    GET /api/astrology/festivals/?month=1&year=2082
-    List festivals, optionally filtered by month/year
-    """
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
@@ -199,10 +194,6 @@ class FestivalListView(APIView):
         return Response(FestivalSerializer(festivals, many=True).data)
 
 class CurrentDateView(APIView):
-    """
-    GET /api/astrology/current-date/
-    Returns today's date in both AD and BS formats
-    """
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):

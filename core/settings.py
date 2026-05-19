@@ -111,7 +111,7 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': redis_url,
         'OPTIONS': {
-            'PASSWORD': parsed.password,
+            'password': parsed.password,
         }
     }
 }
