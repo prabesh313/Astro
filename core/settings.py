@@ -54,8 +54,10 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'channels',
-
+    'cloudinary',
+    'cloudinary_storage',
 ]
+
 if DEBUG:
     INSTALLED_APPS += ['django_extensions']
 
@@ -161,14 +163,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 STORAGES = {
-    'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
-    'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
@@ -196,14 +197,15 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 
-# Override Django's CSRF origin check entirely for Railway
-CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS',
-    default='https://astro-production-6c88.up.railway.app'
-).split(',')
+CSRF_TRUSTED_ORIGINS = [
+    "https://astro-production-6c88.up.railway.app",
+    "http://astro-production-6c88.up.railway.app",
+    "https://tourmaline-cheesecake-fc8765.netlify.app",
+    "http://tourmaline-cheesecake-fc8765.netlify.app",
+    "http://127.0.0.1:5500",
+    
+]
 
-# Strip whitespace from each origin
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in CSRF_TRUSTED_ORIGINS]
 
 # Debug logging
 if DEBUG:
@@ -234,3 +236,9 @@ CSRF_USE_SESSIONS = False
 # Session Cookie Configuration
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUD_NAME'),
+    'API_KEY': config('API_KEY'),
+    'API_SECRET': config('API_SECRET'),
+}
