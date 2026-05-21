@@ -201,7 +201,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 raw_csrf = config("CSRF_TRUSTED_ORIGINS", default="")
 
-print("RAW CSRF:", raw_csrf)
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
@@ -209,11 +208,10 @@ CSRF_TRUSTED_ORIGINS = [
     if origin.strip()
 ]
 
+print(f"RAW CSRF: {raw_csrf}", file=sys.stderr, flush=True)
+print(f"FINAL CSRF: {CSRF_TRUSTED_ORIGINS}", file=sys.stderr, flush=True)
 
-print("FINAL CSRF:", CSRF_TRUSTED_ORIGINS)
 
-print("CSRF LOADED SUCCESSFULLY")
-print(CSRF_TRUSTED_ORIGINS)
 
 
 # Debug logging
