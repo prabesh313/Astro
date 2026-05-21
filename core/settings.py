@@ -199,12 +199,18 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 
 
+raw_csrf = config("CSRF_TRUSTED_ORIGINS", default="")
+
+print("RAW CSRF:", raw_csrf)
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in config("CSRF_TRUSTED_ORIGINS", default="").split(",")
     if origin.strip()
 ]
+
+
+print("FINAL CSRF:", CSRF_TRUSTED_ORIGINS)
 
 print("CSRF LOADED SUCCESSFULLY")
 print(CSRF_TRUSTED_ORIGINS)
