@@ -41,6 +41,6 @@ class PDFCloudinaryStorage(MediaCloudinaryStorage):
         url, _ = cloudinary.utils.cloudinary_url(
             cloudinary_name,
             resource_type="raw",
-            flags="fl_inline",
+            flags="inline",
         )
         return url
