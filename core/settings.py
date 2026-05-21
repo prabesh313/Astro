@@ -26,9 +26,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
-PROKERALA_CLIENT_ID = config('PROKERALA_CLIENT_ID')
-PROKERALA_CLIENT_SECRET = config('PROKERALA_CLIENT_SECRET')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
+PROKERALA_CLIENT_ID = config('PROKERALA_CLIENT_ID', default='')
+PROKERALA_CLIENT_SECRET = config('PROKERALA_CLIENT_SECRET', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -245,7 +245,9 @@ SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUD_NAME'),
-    'API_KEY': config('API_KEY'),
-    'API_SECRET': config('API_SECRET'),
+    'CLOUD_NAME': config('CLOUD_NAME', default=''),
+    'API_KEY': config('API_KEY', default=''),
+    'API_SECRET': config('API_SECRET', default=''),
 }
+
+print("ENV CHECK:", config("CSRF_TRUSTED_ORIGINS", default="NOT LOADED"))
