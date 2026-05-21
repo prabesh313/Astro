@@ -48,9 +48,18 @@ def debug_headers(request):
         'SERVER_PORT': request.META.get('SERVER_PORT', 'none'),
     })
 
+import os
 
+def debug_csrf(request):
+    raw = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+
+    return JsonResponse({
+        "raw": raw,
+        "parsed": [x.strip() for x in raw.split(",") if x.strip()]
+    })
 
 urlpatterns = [
+    path('debug-csrf/', debug_csrf),
     path('debug-headers/', debug_headers),
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
