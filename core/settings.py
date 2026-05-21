@@ -203,8 +203,8 @@ raw_csrf = config("CSRF_TRUSTED_ORIGINS", default="")
 
 
 CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in config("CSRF_TRUSTED_ORIGINS", default="").split(",")
+    origin.strip().rstrip("/")
+    for origin in raw_csrf.split(",")
     if origin.strip()
 ]
 
