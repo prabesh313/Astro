@@ -201,13 +201,11 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://astro-production-6c88.up.railway.app",
-    "http://astro-production-6c88.up.railway.app",
-    "https://tourmaline-cheesecake-fc8765.netlify.app",
-    "http://tourmaline-cheesecake-fc8765.netlify.app",
-    "http://127.0.0.1:5500",
-    
+    origin.strip()
+    for origin in config("CSRF_TRUSTED_ORIGINS", default="").split(",")
+    if origin.strip()
 ]
+
 print("CSRF LOADED SUCCESSFULLY")
 print(CSRF_TRUSTED_ORIGINS)
 
