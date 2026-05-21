@@ -1,11 +1,13 @@
 from django.db import models
+from rituals.storage import AudioCloudinaryStorage
+
 
 # Create your models here.
 class Mantra(models.Model):
     name= models.CharField(max_length=200)
     text= models.TextField()
     meaning= models.TextField(blank=True)
-    audio = models.FileField(upload_to='mantras/audio/', blank=True, null=True)
+    audio = models.FileField(upload_to='mantras/audio/',storage=AudioCloudinaryStorage(),blank=True, null=True)
     language = models.CharField(max_length=50, blank=True, default='Sanskrit')
 
     def __str__(self):
