@@ -14,4 +14,4 @@ class RitualViewSet(viewsets.ReadOnlyModelViewSet):
     queryset=Ritual.objects.all()
     serializer_class=RitualSerializer
     filter_backends=[filters.SearchFilter]
-    search_filds=['name', 'description', 'category']
+    search_fields=['name', 'description', 'category']
